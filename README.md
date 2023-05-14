@@ -1,6 +1,7 @@
 # WIP: wordpresslib
 
 For learning node.js and wordpress by MDN tutorial.
+Working with MongoDB
 ```
 npm install
 npm start
