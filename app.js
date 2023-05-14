@@ -4,8 +4,17 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var mongoose = require('mongoose');
+mongoose.set('strictQuery', false);
 var dev_db_url = 'mongodb+srv://blacwh:0924@cluster0.8hct7.mongodb.net/?retryWrites=true&w=majority';
 var mongoDB = process.env.MONGODB_URI || dev_db_url;
+// Import routes for "catalog" area of site
+const catalogRouter = require("./routes/catalog"); 
+// Set up rate limiter: maximum of twenty requests per minute
+const RateLimit = require("express-rate-limit");
+const limiter = RateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 20,
+});
 
 mongoose.connect(mongoDB, 
   {useNewUrlParser: true, useUnifiedTopology: true});
@@ -17,7 +26,7 @@ db.on('error', console.error.bind(console,
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var wiki = require('./routes/wiki');
-var catalogRouter = require('./routes/catalog')
+// var catalogRouter = require('./routes/catalog')
 var compression = require('compression');
 var helmet = require('helmet');
 
@@ -29,7 +38,15 @@ app.set('view engine', 'pug');
 
 app.use(logger('dev'));
 app.use(compression());
-app.use(helmet());
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      "script-src": ["'self'", "code.jquery.com", "cdn.jsdelivr.net"],
+    },
+  })
+);
+
+app.use(limiter);
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
